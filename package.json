@@ -4,5 +4,7 @@
   "dependencies": {
     "slappforge-sdk-aws": "0.0.5"
   },
-  "devDependencies": {}
+  "devDependencies": {
+    "aws-sdk": "2.176.0"
+  }
 }

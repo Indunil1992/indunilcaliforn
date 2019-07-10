@@ -23,7 +23,7 @@
         "children": [],
         "isRemovable": true,
         "filePath": "indunilcaliforn/lambda.js",
-        "code": "let SL_AWS = require('slappforge-sdk-aws');\nlet connectionManager = require('./ConnectionManager');\nconst rds = new SL_AWS.RDS(connectionManager);\n\nexports.handler = function (event, context, callback) {\n\n\n    // You must always end/destroy the DB connection after it's used\n    rds.beginTransaction({\n        instanceIdentifier: 'indunil'\n    }, function (error, connection) {\n        if (error) {\n            throw error;\n        }\n    });\n\n\n\n    callback(null, { \"message\": \"Successfully executed\" });\n}",
+        "code": "let AWS = require('aws-sdk');\nlet SL_AWS = require('slappforge-sdk-aws');\nconst sqs = new SL_AWS.SQS(AWS);\n\nexports.handler = function (event, context, callback) {\n\n    sqs.receiveMessage({\n        QueueUrl: `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.SIGMA_AWS_ACC_ID}/new`,\n        AttributeNames: ['All'],\n        MaxNumberOfMessages: '10',\n        VisibilityTimeout: '30',\n        WaitTimeSeconds: '0'\n    }).promise()\n        .then(receivedMsgData => {\n            if (!!(receivedMsgData) && !!(receivedMsgData.Messages)) {\n                let receivedMessages = receivedMsgData.Messages;\n                receivedMessages.forEach(message => {\n                    // your logic to access each message through out the loop. Each message is available under variable message \n                    // within this block\n                    console.log(\"msg with receive\");\n                 console.log( message );\n                });\n            } else {\n                console.log(\"Success\");\n                 //console.log( data );\n                // No messages to process\n            }\n        })\n        .catch(err => {\n            console.log(\"not Success\");\n                 console.log( err );\n            // error handling goes here\n        });\n\n\n\n\n    callback(null, { \"message\": \"Successfully executed\" });\n}",
         "config": {
           "runtime": "nodejs8.10",
           "handler": "handler",
@@ -31,7 +31,12 @@
           "memory": 128,
           "layers": []
         },
-        "triggers": []
+        "triggers": [
+          {
+            "resourceName": "apigusWest1newAPIqainduget",
+            "config": {}
+          }
+        ]
       },
       "9a637834-0e35-4850-a3a0-94bec095716a": {
         "id": "9a637834-0e35-4850-a3a0-94bec095716a",
@@ -52,46 +57,50 @@
     ],
     "currentFileId": "be61201c-60d0-4e3e-942d-27260154c670",
     "resources": {
-      "rds-indunil": {
-        "name": "rds-indunil",
-        "type": "RDS",
+      "apigusWest1newAPIqainduget": {
+        "name": "apigusWest1newAPIqainduget",
+        "type": "API_GATEWAY",
         "config": {
-          "editMode": false,
-          "operation": 1,
-          "rdsInstance": {
-            "rdsEngineType": "mysql",
-            "rdsEdition": "",
-            "rdsInstanceSpec": {
-              "dbInstanceClass": "db.t2.micro",
-              "dbLicenseModel": "general-public-license",
-              "dbEngineVersion": "5.7.19"
-            },
-            "rdsSetting": {
-              "instanceIdentifier": "indunil",
-              "masterUsername": "indunil",
-              "masterPassword": "sachithra"
-            },
-            "rdsDBOptions": {
-              "dbName": "indunil",
-              "dbPort": "3306"
-            },
-            "rdsInstanceArn": "",
-            "Host": "",
-            "doesExist": false,
-            "initializationQuery": "",
-            "alreadyDeployed": false
-          },
-          "rdsInstanceResources": [],
-          "projectRegion": "us-west-1",
+          "selectedRegion": "us-west-1",
+          "apiMode": 0,
+          "apiName": "newAPI",
+          "endpointType": "REGIONAL",
+          "resourceMode": 0,
+          "resourceName": "qa/indu",
+          "resourcePath": "/qa/indu",
+          "restMethod": "GET",
+          "proxyIntegration": false,
+          "enableCORS": false,
+          "stageMode": 0,
+          "stageName": "test",
+          "mode": 0
+        }
+      },
+      "sqsnew": {
+        "name": "sqsnew",
+        "type": "SQS",
+        "config": {
           "mode": 0,
-          "additionalFiles": [],
-          "params": {
-            "query": "",
-            "inserts": ""
-          },
-          "isGlobalEditMode": false,
-          "enableInject": true,
-          "isNewFromGlobal": false
+          "existing": false,
+          "name": "new",
+          "url": "https://sqs.us-west-1.amazonaws.com/318300609668/new",
+          "selectedRegion": "us-west-1",
+          "deliveryDelay": 0,
+          "deliveryDelayUnit": "seconds",
+          "useRedrivePolicy": false,
+          "useSSE": false,
+          "kmsCustomerMasterKey": "default",
+          "accountId": "318300609668",
+          "dataKeyReusePeriod": 5,
+          "queueType": "standardQueue",
+          "defaultVisibilityTimeout": 30,
+          "defaultVisibilityTimeoutUnit": "seconds",
+          "messageRetentionPeriod": 4,
+          "messageRetentionPeriodUnit": "days",
+          "maximumMessageSize": 256,
+          "receiveMessageWaitTime": 0,
+          "deadLetterQueueName": "",
+          "contentBasedDeduplication": false
         }
       }
     },
@@ -117,6 +126,13 @@
           "version": "0.0.5",
           "dev": false,
           "notRemovable": false
+        },
+        "aws-sdk": {
+          "name": "aws-sdk",
+          "language": "javascript",
+          "version": "2.176.0",
+          "dev": true,
+          "notRemovable": false
         }
       }
     }
@@ -128,7 +144,7 @@
     "projectRegion": "us-west-1",
     "platform": "AWS",
     "platformRegions": {},
-    "lastSave": 1561623141991
+    "lastSave": 1562732457424
   },
   "VCS_STATE": {
     "provider": "GitHub",
